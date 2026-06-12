@@ -103,7 +103,3 @@ The system allows students to register and verify their face, automatically mark
 ## Author
 
 Anisha Salaskar
-
-Bachelor of Science in Information Technology
-
-Final Year Project
