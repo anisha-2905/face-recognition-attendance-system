@@ -1,0 +1,100 @@
+{% extends "base.html" %}
+{% block title %}Teacher Dashboard | Face Attendance{% endblock %}
+{% block content %}
+<div class="page-heading">
+  <div>
+    <div class="page-kicker">Teacher Workspace</div>
+    <h1 class="h3 mb-0">Attendance Overview</h1>
+  </div>
+  <div class="btn-group">
+    <a class="btn btn-primary" href="{{ url_for('teacher.attendance') }}"><i class="bi bi-pencil-square me-1"></i>Manual Attendance</a>
+    <a class="btn btn-outline-primary" href="{{ url_for('teacher.reports') }}"><i class="bi bi-bar-chart-line me-1"></i>Reports</a>
+  </div>
+</div>
+
+<div class="row g-3 mb-4">
+  <div class="col-sm-6 col-xl-3">
+    <div class="card stat-card h-100"><div class="card-body"><div class="d-flex justify-content-between"><div><div class="stat-label">Subjects</div><div class="stat-value">{{ stats.subjects or 0 }}</div></div><span class="stat-icon"><i class="bi bi-journal-bookmark"></i></span></div></div></div>
+  </div>
+  <div class="col-sm-6 col-xl-3">
+    <div class="card stat-card h-100"><div class="card-body"><div class="d-flex justify-content-between"><div><div class="stat-label">Present Today</div><div class="stat-value text-success">{{ stats.present_today or 0 }}</div></div><span class="stat-icon"><i class="bi bi-check2-circle"></i></span></div></div></div>
+  </div>
+  <div class="col-sm-6 col-xl-3">
+    <div class="card stat-card h-100"><div class="card-body"><div class="d-flex justify-content-between"><div><div class="stat-label">Absent Today</div><div class="stat-value text-danger">{{ stats.absent_today or 0 }}</div></div><span class="stat-icon"><i class="bi bi-x-circle"></i></span></div></div></div>
+  </div>
+  <div class="col-sm-6 col-xl-3">
+    <div class="card stat-card h-100"><div class="card-body"><div class="d-flex justify-content-between"><div><div class="stat-label">Present Rate</div><div class="stat-value">{{ stats.present_rate or 0 }}%</div></div><span class="stat-icon"><i class="bi bi-graph-up-arrow"></i></span></div></div></div>
+  </div>
+</div>
+
+<div class="row g-3 align-items-stretch">
+  <div class="col-xl-4 col-lg-5">
+    <div class="panel-header">
+      <h2 class="h5 section-title">Low Attendance Students</h2>
+    </div>
+    <div class="list-group compact-list content-panel">
+      {% for row in low_attendance_students %}
+        <a class="list-group-item list-group-item-action" href="{{ url_for('teacher.attendance', student_id=row.student.id) }}">
+          <div class="d-flex justify-content-between gap-3">
+            <span class="fw-semibold text-white">{{ row.student.user.name }}</span>
+            <span class="text-danger fw-semibold">{{ row.percentage }}%</span>
+          </div>
+          <div class="text-muted small">{{ row.student.roll_number }} &middot; {{ row.student.section or "No section" }}</div>
+        </a>
+      {% else %}
+        <div class="list-group-item text-muted">No low-attendance students yet.</div>
+      {% endfor %}
+    </div>
+  </div>
+
+  <div class="col-xl-8 col-lg-7">
+    <div class="panel-header">
+      <h2 class="h5 section-title">Subject-wise Records</h2>
+      <a class="btn btn-sm btn-outline-primary" href="{{ url_for('teacher.attendance') }}">View Records</a>
+    </div>
+    <div class="table-responsive content-panel">
+      <table class="table table-hover align-middle">
+        <thead><tr><th>Subject</th><th>Students</th><th>Total Records</th><th>Present Today</th></tr></thead>
+        <tbody>
+          {% for row in subject_records %}
+            <tr>
+              <td><span class="fw-semibold">{{ row.subject.code }}</span><div class="text-muted small">{{ row.subject.name }}</div></td>
+              <td>{{ row.students }}</td>
+              <td>{{ row.records }}</td>
+              <td><span class="badge text-bg-primary">{{ row.present_today }}</span></td>
+            </tr>
+          {% else %}
+            <tr><td colspan="4" class="text-muted">No subjects assigned yet.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<div class="row g-3 mt-1">
+  <div class="col-12">
+    <div class="panel-header">
+      <h2 class="h5 section-title">Recent Attendance</h2>
+    </div>
+    <div class="table-responsive">
+      <table class="table table-hover align-middle">
+        <thead><tr><th>Date</th><th>Student</th><th>Subject</th><th>Status</th><th>Method</th></tr></thead>
+        <tbody>
+          {% for row in recent_records %}
+            <tr>
+              <td>{{ row.attendance_date }}</td>
+              <td>{{ row.student.user.name }}</td>
+              <td>{{ row.subject.code }}</td>
+              <td><span class="badge text-bg-secondary">{{ row.status }}</span></td>
+              <td>{{ row.method }}</td>
+            </tr>
+          {% else %}
+            <tr><td colspan="5" class="text-muted">No attendance records yet.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}

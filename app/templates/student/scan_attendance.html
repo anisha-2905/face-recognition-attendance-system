@@ -1,0 +1,157 @@
+{% extends "base.html" %}
+{% block title %}Scan Attendance | Face Attendance{% endblock %}
+{% block content %}
+<div class="page-heading">
+  <div>
+    <div class="page-kicker">Self Attendance</div>
+    <h1 class="h3 mb-0">Scan Face / Mark Attendance</h1>
+  </div>
+  <a class="btn btn-outline-primary" href="{{ url_for('student.dashboard') }}"><i class="bi bi-grid-1x2 me-1"></i>Dashboard</a>
+</div>
+
+<div class="row g-3 align-items-stretch">
+  <div class="col-xl-8 col-lg-7">
+    <div class="card h-100">
+      <div class="card-body">
+        <form class="row g-2 align-items-end mb-3" method="get">
+          <div class="col-md-8">
+            <label class="form-label" for="subject_id">Subject</label>
+            <select class="form-select" id="subject_id" name="subject_id">
+              {% for enrollment in enrollments %}
+                <option value="{{ enrollment.subject.id }}" {% if selected_subject and selected_subject.id == enrollment.subject.id %}selected{% endif %}>
+                  {{ enrollment.subject.code }} - {{ enrollment.subject.name }}
+                </option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="col-md-4">
+            <button class="btn btn-outline-primary w-100" type="submit">Use Subject</button>
+          </div>
+        </form>
+
+        <div class="camera-frame position-relative ratio ratio-16x9 rounded overflow-hidden mb-3">
+          <video id="camera" autoplay playsinline muted></video>
+          <canvas id="overlay" class="position-absolute top-0 start-0 w-100 h-100"></canvas>
+        </div>
+        <div class="d-flex flex-wrap gap-2 align-items-center">
+          <button id="startCamera" class="btn btn-outline-primary" type="button" {% if not selected_subject or not student.face_profile %}disabled{% endif %}>
+            <i class="bi bi-camera-video me-1"></i>Start Camera
+          </button>
+          <button id="markAttendance" class="btn btn-primary" type="button" disabled>
+            <i class="bi bi-person-check me-1"></i>Scan & Mark Present
+          </button>
+          <span id="scanStatus" class="text-muted small">Ready</span>
+        </div>
+        <canvas id="snapshot" class="d-none"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-xl-4 col-lg-5">
+    <div id="messageBox" class="alert alert-info" role="alert">
+      {% if not student.face_profile %}
+        Register your face before marking attendance.
+      {% elif selected_subject %}
+        Selected subject: {{ selected_subject.code }}
+      {% else %}
+        No subjects assigned. Please contact admin.
+      {% endif %}
+    </div>
+
+    <div class="card">
+      <div class="card-body">
+        <div class="info-section-title"><i class="bi bi-calendar2-check"></i>Today</div>
+        {% if today_attendance %}
+          {% for row in today_attendance %}
+            <div class="profile-meta-item mb-2">
+              <span>{{ row.subject.code }}</span>
+              <strong class="text-success">{{ row.status|title }} at {{ row.marked_at.strftime("%H:%M") }}</strong>
+            </div>
+          {% endfor %}
+        {% else %}
+          <div class="text-muted">No attendance marked for this subject today.</div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const video = document.getElementById("camera");
+const overlay = document.getElementById("overlay");
+const snapshot = document.getElementById("snapshot");
+const startButton = document.getElementById("startCamera");
+const markButton = document.getElementById("markAttendance");
+const statusText = document.getElementById("scanStatus");
+const messageBox = document.getElementById("messageBox");
+const subjectSelect = document.getElementById("subject_id");
+let stream = null;
+
+function setMessage(type, message) {
+  messageBox.className = `alert alert-${type}`;
+  messageBox.textContent = message;
+}
+
+function captureFrame() {
+  snapshot.width = video.videoWidth;
+  snapshot.height = video.videoHeight;
+  snapshot.getContext("2d").drawImage(video, 0, 0, snapshot.width, snapshot.height);
+  return snapshot.toDataURL("image/jpeg", 0.9);
+}
+
+function drawFace(face) {
+  overlay.width = video.clientWidth;
+  overlay.height = video.clientHeight;
+  const context = overlay.getContext("2d");
+  context.clearRect(0, 0, overlay.width, overlay.height);
+  if (!face || !snapshot.width || !snapshot.height) return;
+  const box = face.box;
+  const scaleX = overlay.width / snapshot.width;
+  const scaleY = overlay.height / snapshot.height;
+  const left = box.left * scaleX;
+  const top = box.top * scaleY;
+  const width = (box.right - box.left) * scaleX;
+  const height = (box.bottom - box.top) * scaleY;
+  context.strokeStyle = face.matched ? "#0fbbb5" : "#d92d48";
+  context.lineWidth = 3;
+  context.strokeRect(left, top, width, height);
+}
+
+async function startCamera() {
+  stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" }, audio: false });
+  video.srcObject = stream;
+  startButton.disabled = true;
+  markButton.disabled = false;
+  statusText.textContent = "Camera active";
+  setMessage("info", "Align your face clearly and mark attendance.");
+}
+
+async function markAttendance() {
+  if (!stream || !video.videoWidth) return;
+  markButton.disabled = true;
+  statusText.textContent = "Verifying...";
+  const response = await fetch("{{ url_for('student.scan_attendance_mark') }}", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ subject_id: subjectSelect.value, image: captureFrame() })
+  });
+  const data = await response.json();
+  drawFace((data.result && data.result.faces && data.result.faces[0]) || null);
+  if (!response.ok || !data.ok) {
+    setMessage("warning", data.message || "Face verification failed.");
+    statusText.textContent = "Try again";
+    markButton.disabled = false;
+    return;
+  }
+  setMessage(data.created ? "success" : "info", data.message);
+  statusText.textContent = `Last scan ${new Date().toLocaleTimeString()}`;
+  window.setTimeout(() => window.location.reload(), 900);
+}
+
+startButton.addEventListener("click", () => startCamera().catch((error) => setMessage("danger", error.message)));
+markButton.addEventListener("click", () => markAttendance().catch((error) => {
+  setMessage("danger", error.message);
+  markButton.disabled = false;
+}));
+</script>
+{% endblock %}

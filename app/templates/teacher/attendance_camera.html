@@ -1,0 +1,176 @@
+{% extends "base.html" %}
+{% block title %}Face Attendance Session | Face Attendance{% endblock %}
+{% block content %}
+<div class="page-heading">
+  <div>
+    <div class="page-kicker">Live Recognition</div>
+    <h1 class="h3 mb-1">Face Attendance Session</h1>
+    <div class="text-muted">{{ known_face_count }} registered face profiles</div>
+  </div>
+  <a class="btn btn-outline-secondary" href="{{ url_for('teacher.attendance') }}"><i class="bi bi-calendar-check me-1"></i>Attendance Records</a>
+</div>
+
+<div class="row g-4">
+  <div class="col-lg-8">
+    <div class="card">
+      <div class="card-body">
+        <form class="row g-2 align-items-end mb-3" method="get">
+          <div class="col-md-8">
+            <label class="form-label" for="subject_id">Subject</label>
+            <select class="form-select" id="subject_id" name="subject_id">
+              {% for subject in subjects %}
+                <option value="{{ subject.id }}" {% if selected_subject and selected_subject.id == subject.id %}selected{% endif %}>
+                  {{ subject.code }} - {{ subject.name }}
+                </option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="col-md-4">
+            <button class="btn btn-outline-primary w-100" type="submit">Use Subject</button>
+          </div>
+        </form>
+
+        <div class="camera-frame position-relative ratio ratio-16x9 bg-dark rounded overflow-hidden mb-3">
+          <video id="camera" autoplay playsinline muted></video>
+          <canvas id="overlay" class="position-absolute top-0 start-0 w-100 h-100"></canvas>
+        </div>
+        <div class="d-flex flex-wrap gap-2 align-items-center">
+          <button id="startCamera" class="btn btn-primary" type="button" {% if not selected_subject %}disabled{% endif %}><i class="bi bi-play-fill me-1"></i>Start Session</button>
+          <button id="stopCamera" class="btn btn-outline-danger" type="button" disabled>Stop</button>
+          <span id="sessionStatus" class="text-muted small">Ready</span>
+        </div>
+        <canvas id="snapshot" class="d-none"></canvas>
+      </div>
+    </div>
+  </div>
+  <div class="col-lg-4">
+    <div id="messageBox" class="alert alert-info" role="alert">
+      {% if selected_subject %}
+        Selected subject: {{ selected_subject.code }}
+      {% else %}
+        No assigned subject is available.
+      {% endif %}
+    </div>
+    <div class="card">
+      <div class="card-body">
+        <div class="d-flex justify-content-between align-items-center mb-2">
+          <h2 class="h5 section-title mb-0">Recognized Students</h2>
+          <span id="markedCount" class="badge text-bg-primary">0</span>
+        </div>
+        <div id="recognizedList" class="list-group list-group-flush">
+          <div class="list-group-item text-muted">No students recognized yet.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const video = document.getElementById("camera");
+const overlay = document.getElementById("overlay");
+const snapshot = document.getElementById("snapshot");
+const startButton = document.getElementById("startCamera");
+const stopButton = document.getElementById("stopCamera");
+const statusText = document.getElementById("sessionStatus");
+const messageBox = document.getElementById("messageBox");
+const recognizedList = document.getElementById("recognizedList");
+const markedCount = document.getElementById("markedCount");
+const subjectSelect = document.getElementById("subject_id");
+const recognizedStudents = new Map();
+let stream = null;
+let timer = null;
+
+function setMessage(type, message) {
+  messageBox.className = `alert alert-${type}`;
+  messageBox.textContent = message;
+}
+
+function captureFrame() {
+  snapshot.width = video.videoWidth;
+  snapshot.height = video.videoHeight;
+  snapshot.getContext("2d").drawImage(video, 0, 0, snapshot.width, snapshot.height);
+  return snapshot.toDataURL("image/jpeg", 0.85);
+}
+
+function drawFaces(faces) {
+  overlay.width = video.clientWidth;
+  overlay.height = video.clientHeight;
+  const context = overlay.getContext("2d");
+  context.clearRect(0, 0, overlay.width, overlay.height);
+  if (!snapshot.width || !snapshot.height) return;
+  const scaleX = overlay.width / snapshot.width;
+  const scaleY = overlay.height / snapshot.height;
+  faces.forEach((face) => {
+    const box = face.box;
+    const left = box.left * scaleX;
+    const top = box.top * scaleY;
+    const width = (box.right - box.left) * scaleX;
+    const height = (box.bottom - box.top) * scaleY;
+    context.strokeStyle = face.matched ? "#20c997" : "#ffc107";
+    context.lineWidth = 3;
+    context.strokeRect(left, top, width, height);
+    context.fillStyle = "rgba(0, 0, 0, 0.65)";
+    context.fillRect(left, Math.max(0, top - 30), Math.max(width, 170), 28);
+    context.fillStyle = "#fff";
+    context.font = "14px system-ui";
+    context.fillText(`${face.name} ${face.confidence}%`, left + 8, Math.max(18, top - 10));
+  });
+}
+
+function updateRecognizedList(items) {
+  items.forEach((item) => recognizedStudents.set(item.student_id, item));
+  markedCount.textContent = recognizedStudents.size;
+  recognizedList.innerHTML = "";
+  if (!recognizedStudents.size) {
+    recognizedList.innerHTML = '<div class="list-group-item text-muted">No students recognized yet.</div>';
+    return;
+  }
+  [...recognizedStudents.values()].forEach((item) => {
+    const row = document.createElement("div");
+    row.className = "list-group-item";
+    row.innerHTML = `<div class="d-flex justify-content-between"><strong>${item.name}</strong><span>${item.confidence}%</span></div>
+      <div class="text-muted small">${item.roll_number} · ${item.subject} · ${item.created ? "Marked" : "Already marked"}</div>`;
+    recognizedList.prepend(row);
+  });
+}
+
+async function recognizeOnce() {
+  if (!stream || !video.videoWidth) return;
+  const response = await fetch("{{ url_for('teacher.recognize_attendance_frame') }}", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ subject_id: subjectSelect.value, image: captureFrame() })
+  });
+  const data = await response.json();
+  if (!response.ok || !data.ok) {
+    setMessage("warning", data.message || "Recognition failed.");
+    return;
+  }
+  drawFaces(data.result.faces || []);
+  updateRecognizedList(data.marked || []);
+  statusText.textContent = `Last scan ${new Date().toLocaleTimeString()}`;
+}
+
+async function startSession() {
+  stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" }, audio: false });
+  video.srcObject = stream;
+  startButton.disabled = true;
+  stopButton.disabled = false;
+  setMessage("success", "Session running.");
+  timer = window.setInterval(() => recognizeOnce().catch((error) => setMessage("warning", error.message)), 1500);
+}
+
+function stopSession() {
+  window.clearInterval(timer);
+  timer = null;
+  if (stream) stream.getTracks().forEach((track) => track.stop());
+  stream = null;
+  startButton.disabled = false;
+  stopButton.disabled = true;
+  statusText.textContent = "Stopped";
+}
+
+startButton.addEventListener("click", () => startSession().catch((error) => setMessage("danger", error.message)));
+stopButton.addEventListener("click", stopSession);
+</script>
+{% endblock %}

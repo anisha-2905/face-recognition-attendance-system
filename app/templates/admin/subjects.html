@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% block title %}Subjects | Face Attendance{% endblock %}
+{% block content %}
+<div class="page-heading">
+  <div>
+    <div class="page-kicker">Administration</div>
+    <h1 class="h3 mb-0">Subjects</h1>
+  </div>
+  <a class="btn btn-primary" href="{{ url_for('admin.create_subject') }}"><i class="bi bi-plus-lg me-1"></i>New Subject</a>
+</div>
+<div class="table-responsive">
+  <table class="table table-hover align-middle">
+    <thead><tr><th>Code</th><th>Name</th><th>Department</th><th>Semester</th><th>Teacher</th><th></th></tr></thead>
+    <tbody>
+      {% for subject in subjects %}
+        <tr>
+          <td>{{ subject.code }}</td>
+          <td>{{ subject.name }}</td>
+          <td>{{ subject.department or "-" }}</td>
+          <td>{{ subject.semester or "-" }}</td>
+          <td>{{ subject.teacher.user.name if subject.teacher else "-" }}</td>
+          <td class="text-end">
+            <a class="btn btn-sm btn-outline-primary" href="{{ url_for('admin.edit_subject', subject_id=subject.id) }}">Edit</a>
+            <form class="d-inline" method="post" action="{{ url_for('admin.delete_subject', subject_id=subject.id) }}">
+              <button class="btn btn-sm btn-outline-danger" type="submit">Delete</button>
+            </form>
+          </td>
+        </tr>
+      {% else %}
+        <tr><td colspan="6" class="text-muted">No subjects found.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

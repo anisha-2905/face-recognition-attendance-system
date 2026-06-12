@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% block title %}Face Profiles | Face Attendance{% endblock %}
+{% block content %}
+<div class="page-heading">
+  <div>
+    <div class="page-kicker">Administration</div>
+    <h1 class="h3 mb-0">Face Profiles</h1>
+  </div>
+</div>
+
+<div class="table-responsive">
+  <table class="table table-hover align-middle">
+    <thead><tr><th>Student</th><th>Roll No.</th><th>Preview</th><th>Updated</th><th></th></tr></thead>
+    <tbody>
+      {% for profile in profiles %}
+        <tr>
+          <td>{{ profile.student.user.name }}</td>
+          <td>{{ profile.student.roll_number }}</td>
+          <td><img class="avatar" src="{{ url_for('static', filename=profile.image_path) }}" alt="Face profile"></td>
+          <td>{{ profile.updated_at.strftime("%Y-%m-%d %H:%M") }}</td>
+          <td class="text-end">
+            <form method="post" action="{{ url_for('admin.delete_face_profile', profile_id=profile.id) }}" class="d-inline">
+              <button class="btn btn-sm btn-outline-danger" type="submit">Remove</button>
+            </form>
+          </td>
+        </tr>
+      {% else %}
+        <tr><td colspan="5" class="text-muted">No face profiles registered yet.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

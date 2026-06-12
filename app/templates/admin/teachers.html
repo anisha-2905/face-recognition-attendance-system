@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% block title %}Teachers | Face Attendance{% endblock %}
+{% block content %}
+<div class="page-heading">
+  <div>
+    <div class="page-kicker">Administration</div>
+    <h1 class="h3 mb-0">Teachers</h1>
+  </div>
+  <a class="btn btn-primary" href="{{ url_for('admin.create_teacher') }}"><i class="bi bi-plus-lg me-1"></i>New Teacher</a>
+</div>
+<div class="table-responsive">
+  <table class="table table-hover align-middle">
+    <thead><tr><th>Name</th><th>Email</th><th>Employee No.</th><th>Department</th><th>Designation</th><th></th></tr></thead>
+    <tbody>
+      {% for teacher in teachers %}
+        <tr>
+          <td>{{ teacher.user.name }}</td>
+          <td>{{ teacher.user.email }}</td>
+          <td>{{ teacher.employee_number }}</td>
+          <td>{{ teacher.department or "-" }}</td>
+          <td>{{ teacher.designation or "-" }}</td>
+          <td class="text-end">
+            <a class="btn btn-sm btn-outline-primary" href="{{ url_for('admin.edit_teacher', teacher_id=teacher.id) }}">Edit</a>
+            <form class="d-inline" method="post" action="{{ url_for('admin.delete_teacher', teacher_id=teacher.id) }}">
+              <button class="btn btn-sm btn-outline-danger" type="submit">Delete</button>
+            </form>
+          </td>
+        </tr>
+      {% else %}
+        <tr><td colspan="6" class="text-muted">No teachers found.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

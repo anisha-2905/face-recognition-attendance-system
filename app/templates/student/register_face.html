@@ -1,0 +1,110 @@
+{% extends "base.html" %}
+{% block title %}Face Registration | Face Attendance{% endblock %}
+{% block content %}
+<div class="page-heading">
+  <div>
+    <div class="page-kicker">Identity Setup</div>
+    <h1 class="h3 mb-1">Face Registration</h1>
+    <div class="text-muted">{{ student.user.name }} · {{ student.roll_number }}</div>
+  </div>
+  <a class="btn btn-outline-secondary" href="{{ url_for('student.dashboard') }}"><i class="bi bi-grid-1x2 me-1"></i>Dashboard</a>
+</div>
+
+<div class="row g-4">
+  <div class="col-lg-8">
+    <div class="card">
+      <div class="card-body">
+        <div class="camera-frame ratio ratio-16x9 bg-dark rounded overflow-hidden mb-3">
+          <video id="camera" autoplay playsinline muted></video>
+        </div>
+        <div class="d-flex flex-wrap gap-2 align-items-center">
+          <button id="startCamera" class="btn btn-outline-primary" type="button"><i class="bi bi-camera-video me-1"></i>Start Camera</button>
+          <button id="captureFaces" class="btn btn-primary" type="button" disabled>
+            {% if student.face_profile %}Re-register Face{% else %}Register Face{% endif %}
+          </button>
+          <span id="captureStatus" class="text-muted small">Ready</span>
+        </div>
+        <canvas id="snapshot" class="d-none"></canvas>
+      </div>
+    </div>
+  </div>
+  <div class="col-lg-4">
+    <div class="card mb-3">
+      <div class="card-body">
+        <div class="text-muted small text-uppercase">Status</div>
+        {% if student.face_profile %}
+          <div class="fs-5 fw-semibold text-success">Registered</div>
+          <div class="text-muted small">Last updated {{ student.face_profile.updated_at.strftime("%Y-%m-%d %H:%M") }}</div>
+          <img class="img-fluid rounded mt-3" src="{{ url_for('static', filename=student.face_profile.image_path) }}" alt="Registered face">
+        {% else %}
+          <div class="fs-5 fw-semibold text-warning">Not Registered</div>
+          <div class="text-muted small">Capture a clean, single-person set of images.</div>
+        {% endif %}
+      </div>
+    </div>
+    <div id="messageBox" class="alert d-none" role="alert"></div>
+  </div>
+</div>
+
+<script>
+const video = document.getElementById("camera");
+const canvas = document.getElementById("snapshot");
+const statusText = document.getElementById("captureStatus");
+const messageBox = document.getElementById("messageBox");
+const startButton = document.getElementById("startCamera");
+const captureButton = document.getElementById("captureFaces");
+
+function showMessage(type, message) {
+  messageBox.className = `alert alert-${type}`;
+  messageBox.textContent = message;
+}
+
+async function startCamera() {
+  const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" }, audio: false });
+  video.srcObject = stream;
+  captureButton.disabled = false;
+  statusText.textContent = "Camera active";
+}
+
+function captureFrame() {
+  canvas.width = video.videoWidth;
+  canvas.height = video.videoHeight;
+  canvas.getContext("2d").drawImage(video, 0, 0, canvas.width, canvas.height);
+  return canvas.toDataURL("image/jpeg", 0.9);
+}
+
+async function registerFace() {
+  captureButton.disabled = true;
+  statusText.textContent = "Capturing images...";
+  const images = [];
+  for (let i = 0; i < 5; i += 1) {
+    images.push(captureFrame());
+    statusText.textContent = `Captured ${i + 1} of 5`;
+    await new Promise((resolve) => setTimeout(resolve, 450));
+  }
+
+  statusText.textContent = "Processing...";
+  const response = await fetch("{{ url_for('student.register_face_capture') }}", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ images, replace: {{ "true" if student.face_profile else "false" }} })
+  });
+  const data = await response.json();
+  if (!response.ok || !data.ok) {
+    showMessage("danger", data.message || "Face registration failed.");
+    captureButton.disabled = false;
+    statusText.textContent = "Ready";
+    return;
+  }
+  showMessage("success", data.message);
+  statusText.textContent = "Registration complete";
+  window.setTimeout(() => window.location.reload(), 900);
+}
+
+startButton.addEventListener("click", () => startCamera().catch((error) => showMessage("danger", error.message)));
+captureButton.addEventListener("click", () => registerFace().catch((error) => {
+  showMessage("danger", error.message);
+  captureButton.disabled = false;
+}));
+</script>
+{% endblock %}

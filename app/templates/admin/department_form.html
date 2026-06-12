@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% block title %}{{ title }} | Face Attendance{% endblock %}
+{% block content %}
+<div class="page-heading">
+  <div>
+    <div class="page-kicker">Department Management</div>
+    <h1 class="h3 mb-0">{{ title }}</h1>
+  </div>
+</div>
+<form method="post" class="row g-3">
+  {{ form.hidden_tag() }}
+  <div class="col-md-4">{{ form.code.label(class="form-label") }}{{ form.code(class="form-control") }}</div>
+  <div class="col-md-8">{{ form.name.label(class="form-label") }}{{ form.name(class="form-control") }}</div>
+  <div class="col-12">{{ form.description.label(class="form-label") }}{{ form.description(class="form-control") }}</div>
+  <div class="col-12">
+    {{ form.submit(class="btn btn-primary") }}
+    <a class="btn btn-outline-secondary" href="{{ url_for('admin.departments') }}">Cancel</a>
+  </div>
+</form>
+{% endblock %}

@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% block title %}Login | Face Attendance{% endblock %}
+{% block content %}
+<div class="row justify-content-center align-items-center" style="min-height: calc(100vh - 170px);">
+  <div class="col-md-6 col-lg-4">
+    <div class="card">
+      <div class="card-body">
+        <div class="brand-icon mb-3"><i class="bi bi-person-lock"></i></div>
+        <h1 class="h4 section-title mb-2">
+          {% if expected_role %}
+            {{ expected_role|title }} Login
+          {% else %}
+            Sign in
+          {% endif %}
+        </h1>
+        <p class="text-muted mb-4">Sign in to continue to the attendance workspace.</p>
+        <form method="post" class="p-0 border-0 bg-transparent shadow-none">
+          {{ form.hidden_tag() }}
+          <div class="mb-3">
+            {{ form.email.label(class="form-label") }}
+            {{ form.email(class="form-control") }}
+          </div>
+          <div class="mb-3">
+            {{ form.password.label(class="form-label") }}
+            {{ form.password(class="form-control") }}
+          </div>
+          {% if expected_role %}
+            <input type="hidden" name="role" value="{{ expected_role }}">
+          {% else %}
+            <div class="mb-3">
+              {{ form.role.label(class="form-label") }}
+              {{ form.role(class="form-select") }}
+            </div>
+          {% endif %}
+          {{ form.submit(class="btn btn-primary w-100") }}
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

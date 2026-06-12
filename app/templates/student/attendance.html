@@ -1,0 +1,69 @@
+{% extends "base.html" %}
+{% block title %}Attendance History | Face Attendance{% endblock %}
+{% block content %}
+<div class="page-heading">
+  <div>
+    <div class="page-kicker">Records</div>
+    <h1 class="h3 mb-0">Attendance History</h1>
+  </div>
+  <div class="btn-group">
+    <a class="btn btn-outline-success" href="{{ url_for('student.export_attendance_excel', **export_args) }}"><i class="bi bi-file-earmark-spreadsheet me-1"></i>Export Excel</a>
+    <a class="btn btn-outline-danger" href="{{ url_for('student.export_attendance_pdf', **export_args) }}"><i class="bi bi-file-earmark-pdf me-1"></i>Export PDF</a>
+  </div>
+</div>
+
+<form method="get" class="row g-2 align-items-end mb-3">
+  <div class="col-md-3">
+    <label class="form-label" for="subject_id">Subject</label>
+    <select class="form-select" id="subject_id" name="subject_id">
+      <option value="">All subjects</option>
+      {% for subject in subjects %}
+        <option value="{{ subject.id }}" {% if filters.subject_id == subject.id %}selected{% endif %}>{{ subject.code }} - {{ subject.name }}</option>
+      {% endfor %}
+    </select>
+  </div>
+  <div class="col-md-2">
+    <label class="form-label" for="status">Status</label>
+    <select class="form-select" id="status" name="status">
+      <option value="">All</option>
+      {% for status in ["present", "late", "absent"] %}
+        <option value="{{ status }}" {% if filters.status == status %}selected{% endif %}>{{ status|title }}</option>
+      {% endfor %}
+    </select>
+  </div>
+  <div class="col-md-2">
+    <label class="form-label" for="start_date">From</label>
+    <input class="form-control" id="start_date" type="date" name="start_date" value="{{ filters.start_date or '' }}">
+  </div>
+  <div class="col-md-2">
+    <label class="form-label" for="end_date">To</label>
+    <input class="form-control" id="end_date" type="date" name="end_date" value="{{ filters.end_date or '' }}">
+  </div>
+  <div class="col-md-3">
+    <button class="btn btn-primary" type="submit">Apply</button>
+    <a class="btn btn-outline-secondary" href="{{ url_for('student.attendance_history') }}">Reset</a>
+  </div>
+</form>
+
+<div class="table-responsive">
+  <table class="table table-hover align-middle">
+    <thead><tr><th>Date</th><th>Subject</th><th>Teacher</th><th>Status</th><th>Source</th><th>Method</th><th>Confidence</th><th>Marked At</th></tr></thead>
+    <tbody>
+      {% for row in records %}
+        <tr>
+          <td>{{ row.attendance_date }}</td>
+          <td>{{ row.subject.code }} - {{ row.subject.name }}</td>
+          <td>{{ row.marked_by_teacher.user.name if row.marked_by_teacher else "-" }}</td>
+          <td><span class="badge text-bg-secondary">{{ row.status }}</span></td>
+          <td>{{ row.attendance_source|replace("_", " ")|title }}</td>
+          <td>{{ row.method }}</td>
+          <td>{{ "%.2f"|format(row.confidence or 0) }}</td>
+          <td>{{ row.marked_at.strftime("%Y-%m-%d %H:%M") }}</td>
+        </tr>
+      {% else %}
+        <tr><td colspan="8" class="text-muted">No attendance records match these filters.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

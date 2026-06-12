@@ -1,0 +1,164 @@
+{% extends "base.html" %}
+{% block title %}Attendance | Face Attendance{% endblock %}
+{% block content %}
+<div class="page-heading">
+  <div>
+    <div class="page-kicker">Records</div>
+    <h1 class="h3 mb-0">Student Attendance</h1>
+  </div>
+  <div class="btn-group">
+    <a class="btn btn-outline-success" href="{{ url_for('teacher.export_attendance_excel', **export_args) }}"><i class="bi bi-file-earmark-spreadsheet me-1"></i>Export Excel</a>
+    <a class="btn btn-outline-danger" href="{{ url_for('teacher.export_attendance_pdf', **export_args) }}"><i class="bi bi-file-earmark-pdf me-1"></i>Export PDF</a>
+  </div>
+</div>
+
+<form method="get" class="row g-2 align-items-end mb-3">
+  <div class="col-lg-3 col-md-6">
+    <label class="form-label" for="subject_id">Subject</label>
+    <select class="form-select" id="subject_id" name="subject_id">
+      <option value="">All subjects</option>
+      {% for subject in subjects %}
+        <option value="{{ subject.id }}" {% if filters.subject_id == subject.id %}selected{% endif %}>{{ subject.code }} - {{ subject.name }}</option>
+      {% endfor %}
+    </select>
+  </div>
+  <div class="col-lg-2 col-md-6">
+    <label class="form-label" for="student_id">Student</label>
+    <select class="form-select" id="student_id" name="student_id">
+      <option value="">All students</option>
+      {% for student in students %}
+        <option value="{{ student.id }}" {% if filters.student_id == student.id %}selected{% endif %}>{{ student.roll_number }} - {{ student.user.name }}</option>
+      {% endfor %}
+    </select>
+  </div>
+  <div class="col-lg-2 col-md-6">
+    <label class="form-label" for="section">Class / Section</label>
+    <input class="form-control" id="section" name="section" value="{{ filters.section or '' }}" placeholder="A, B, C">
+  </div>
+  <div class="col-lg-2 col-md-6">
+    <label class="form-label" for="status">Status</label>
+    <select class="form-select" id="status" name="status">
+      <option value="">All</option>
+      {% for status in ["present", "late", "absent"] %}
+        <option value="{{ status }}" {% if filters.status == status %}selected{% endif %}>{{ status|title }}</option>
+      {% endfor %}
+    </select>
+  </div>
+  <div class="col-lg-1 col-md-6">
+    <label class="form-label" for="start_date">From</label>
+    <input class="form-control" id="start_date" type="date" name="start_date" value="{{ filters.start_date or '' }}">
+  </div>
+  <div class="col-lg-1 col-md-6">
+    <label class="form-label" for="end_date">To</label>
+    <input class="form-control" id="end_date" type="date" name="end_date" value="{{ filters.end_date or '' }}">
+  </div>
+  <div class="col-lg-1 col-md-6">
+    <button class="btn btn-primary" type="submit">Apply</button>
+  </div>
+  <div class="col-12">
+    <a class="btn btn-sm btn-outline-secondary" href="{{ url_for('teacher.attendance') }}">Reset Filters</a>
+  </div>
+</form>
+
+<div class="card mb-3">
+  <div class="card-body">
+    <div class="info-section-title"><i class="bi bi-calendar-x"></i>Finalize Attendance</div>
+    <form method="post" action="{{ url_for('teacher.finalize_attendance') }}" class="manual-attendance-form row g-2 align-items-end">
+      <div class="col-lg-5 col-md-6">
+        <label class="form-label" for="finalize_subject_id">Subject</label>
+        <select class="form-select" id="finalize_subject_id" name="subject_id" required>
+          {% for subject in subjects %}
+            <option value="{{ subject.id }}" {% if filters.subject_id == subject.id %}selected{% endif %}>{{ subject.code }} - {{ subject.name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="col-lg-3 col-md-6">
+        <label class="form-label" for="finalize_attendance_date">Date</label>
+        <input class="form-control" id="finalize_attendance_date" type="date" name="attendance_date" value="{{ filters.start_date or today }}" required>
+      </div>
+      <div class="col-lg-4 col-md-12">
+        <button class="btn btn-outline-danger w-100" type="submit">
+          <i class="bi bi-calendar-x me-1"></i>Finalize Attendance
+        </button>
+      </div>
+      <div class="col-12 text-muted small">Students assigned to the subject with no record for the selected date will be marked absent.</div>
+    </form>
+  </div>
+</div>
+
+<div class="card mb-3">
+  <div class="card-body">
+    <div class="info-section-title"><i class="bi bi-pencil-square"></i>Manual Attendance / Correction</div>
+    <form method="post" action="{{ url_for('teacher.manual_attendance') }}" class="manual-attendance-form row g-2 align-items-end">
+      <div class="col-lg-3 col-md-6">
+        <label class="form-label" for="manual_subject_id">Subject</label>
+        <select class="form-select" id="manual_subject_id" name="subject_id" required>
+          {% for subject in subjects %}
+            <option value="{{ subject.id }}">{{ subject.code }} - {{ subject.name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="col-lg-3 col-md-6">
+        <label class="form-label" for="manual_student_id">Student</label>
+        <select class="form-select" id="manual_student_id" name="student_id" required>
+          {% for student in students %}
+            <option value="{{ student.id }}">{{ student.roll_number }} - {{ student.user.name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="col-lg-2 col-md-4">
+        <label class="form-label" for="manual_attendance_date">Date</label>
+        <input class="form-control" id="manual_attendance_date" type="date" name="attendance_date">
+      </div>
+      <div class="col-lg-2 col-md-4">
+        <label class="form-label" for="manual_status">Status</label>
+        <select class="form-select" id="manual_status" name="status">
+          <option value="present">Present</option>
+          <option value="absent">Absent</option>
+          <option value="late">Late</option>
+        </select>
+      </div>
+      <div class="col-lg-2 col-md-4">
+        <button class="btn btn-primary w-100" type="submit">Save</button>
+      </div>
+      <div class="col-12">
+        <input class="form-control" name="remarks" placeholder="Optional correction note">
+      </div>
+    </form>
+  </div>
+</div>
+
+<div class="table-responsive">
+  <table class="table table-hover align-middle">
+    <thead><tr><th>Date</th><th>Roll No.</th><th>Student</th><th>Class</th><th>Subject</th><th>Status</th><th>Source</th><th>Method</th><th>Confidence</th><th>Marked At</th><th>Correct</th></tr></thead>
+    <tbody>
+      {% for row in records %}
+        <tr>
+          <td>{{ row.attendance_date }}</td>
+          <td>{{ row.student.roll_number }}</td>
+          <td>{{ row.student.user.name }}</td>
+          <td>{{ row.student.section or "-" }}</td>
+          <td>{{ row.subject.code }}</td>
+          <td><span class="badge text-bg-secondary">{{ row.status }}</span></td>
+          <td>{{ row.attendance_source|replace("_", " ")|title }}</td>
+          <td>{{ row.method }}</td>
+          <td>{{ "%.2f"|format(row.confidence or 0) }}</td>
+          <td>{{ row.marked_at.strftime("%Y-%m-%d %H:%M") }}</td>
+          <td>
+            <form method="post" action="{{ url_for('teacher.update_attendance', attendance_id=row.id) }}" class="d-flex gap-2 p-0 border-0 shadow-none bg-transparent">
+              <select class="form-select form-select-sm" name="status" aria-label="Correct status">
+                {% for status in ["present", "late", "absent"] %}
+                  <option value="{{ status }}" {% if row.status == status %}selected{% endif %}>{{ status|title }}</option>
+                {% endfor %}
+              </select>
+              <button class="btn btn-sm btn-outline-primary" type="submit">Update</button>
+            </form>
+          </td>
+        </tr>
+      {% else %}
+        <tr><td colspan="11" class="text-muted">No attendance records match these filters.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

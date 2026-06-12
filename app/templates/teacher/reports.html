@@ -1,0 +1,211 @@
+{% extends "base.html" %}
+{% block title %}Attendance Reports | Face Attendance{% endblock %}
+{% block content %}
+<div class="page-heading">
+  <div>
+    <div class="page-kicker">Analytics</div>
+    <h1 class="h3 mb-0">Attendance Reports</h1>
+  </div>
+  <div class="btn-group">
+    <a class="btn btn-outline-success" href="{{ url_for('teacher.export_attendance_excel', **export_args) }}"><i class="bi bi-file-earmark-spreadsheet me-1"></i>Export Excel</a>
+    <a class="btn btn-outline-danger" href="{{ url_for('teacher.export_attendance_pdf', **export_args) }}"><i class="bi bi-file-earmark-pdf me-1"></i>Export PDF</a>
+  </div>
+</div>
+
+<form method="get" class="row g-2 align-items-end mb-3">
+  <div class="col-md-3">
+    <label class="form-label" for="subject_id">Subject</label>
+    <select class="form-select" id="subject_id" name="subject_id">
+      <option value="">All subjects</option>
+      {% for subject in subjects %}
+        <option value="{{ subject.id }}" {% if filters.subject_id == subject.id %}selected{% endif %}>{{ subject.code }} - {{ subject.name }}</option>
+      {% endfor %}
+    </select>
+  </div>
+  <div class="col-md-2">
+    <label class="form-label" for="status">Status</label>
+    <select class="form-select" id="status" name="status">
+      <option value="">All</option>
+      {% for status in ["present", "late", "absent"] %}
+        <option value="{{ status }}" {% if filters.status == status %}selected{% endif %}>{{ status|title }}</option>
+      {% endfor %}
+    </select>
+  </div>
+  <div class="col-md-2">
+    <label class="form-label" for="start_date">From</label>
+    <input class="form-control" id="start_date" type="date" name="start_date" value="{{ filters.start_date or '' }}">
+  </div>
+  <div class="col-md-2">
+    <label class="form-label" for="end_date">To</label>
+    <input class="form-control" id="end_date" type="date" name="end_date" value="{{ filters.end_date or '' }}">
+  </div>
+  <div class="col-md-3">
+    <button class="btn btn-primary" type="submit">Generate</button>
+    <a class="btn btn-outline-secondary" href="{{ url_for('teacher.reports') }}">Reset</a>
+  </div>
+</form>
+
+<div class="row g-3 mb-4">
+  <div class="col-sm-6 col-lg-3">
+    <div class="card stat-card h-100">
+      <div class="card-body">
+        <div class="d-flex justify-content-between">
+          <div><div class="stat-label">Total Records</div><div class="stat-value">{{ analytics.total }}</div></div>
+          <span class="stat-icon"><i class="bi bi-clipboard-data"></i></span>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="col-sm-6 col-lg-3">
+    <div class="card stat-card h-100">
+      <div class="card-body">
+        <div class="d-flex justify-content-between">
+          <div><div class="stat-label">Present</div><div class="stat-value text-success">{{ analytics.status.present }}</div></div>
+          <span class="stat-icon"><i class="bi bi-check2-circle"></i></span>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="col-sm-6 col-lg-3">
+    <div class="card stat-card h-100">
+      <div class="card-body">
+        <div class="d-flex justify-content-between">
+          <div><div class="stat-label">Absent</div><div class="stat-value text-danger">{{ analytics.status.absent }}</div></div>
+          <span class="stat-icon"><i class="bi bi-x-circle"></i></span>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="col-sm-6 col-lg-3">
+    <div class="card stat-card h-100">
+      <div class="card-body">
+        <div class="d-flex justify-content-between">
+          <div><div class="stat-label">Attendance %</div><div class="stat-value text-primary">{{ analytics.percentage }}%</div></div>
+          <span class="stat-icon"><i class="bi bi-graph-up-arrow"></i></span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="row g-3 mb-4">
+  <div class="col-lg-8">
+    <div class="card h-100">
+      <div class="card-body">
+        <h2 class="h6 section-title mb-3">Monthly Attendance</h2>
+        <div class="chart-box"><canvas id="monthlyAttendanceChart"></canvas></div>
+      </div>
+    </div>
+  </div>
+  <div class="col-lg-4">
+    <div class="card h-100">
+      <div class="card-body">
+        <h2 class="h6 section-title mb-3">Present vs Absent</h2>
+        <div class="chart-box"><canvas id="presentAbsentChart"></canvas></div>
+      </div>
+    </div>
+  </div>
+  <div class="col-12">
+    <div class="card">
+      <div class="card-body">
+        <h2 class="h6 section-title mb-3">Attendance Percentage Trend</h2>
+        <div class="chart-box chart-box-sm"><canvas id="attendancePercentageChart"></canvas></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="table-responsive">
+  <table class="table table-striped align-middle">
+    <thead><tr><th>Subject</th><th>Roll No.</th><th>Student</th><th>Present</th><th>Late</th><th>Absent</th><th>Total</th><th>Attendance %</th></tr></thead>
+    <tbody>
+      {% for row in summaries %}
+        <tr>
+          <td>{{ row.subject.code }}</td>
+          <td>{{ row.student.roll_number }}</td>
+          <td>{{ row.student.user.name }}</td>
+          <td>{{ row.present }}</td>
+          <td>{{ row.late }}</td>
+          <td>{{ row.absent }}</td>
+          <td>{{ row.total }}</td>
+          <td>{{ row.percentage }}%</td>
+        </tr>
+      {% else %}
+        <tr><td colspan="8" class="text-muted">No report data found for these filters.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+<script>
+  const attendanceAnalytics = {{ analytics|tojson }};
+  const chartTextColor = "#34485f";
+  const gridColor = "rgba(99, 117, 138, 0.16)";
+  const chartPlugins = {
+    legend: { labels: { color: chartTextColor, boxWidth: 12, usePointStyle: true } },
+    tooltip: { backgroundColor: "#ffffff", titleColor: "#0b1726", bodyColor: "#34485f", borderColor: "rgba(37,99,235,0.18)", borderWidth: 1, padding: 12 }
+  };
+
+  new Chart(document.getElementById("monthlyAttendanceChart"), {
+    type: "bar",
+    data: {
+      labels: attendanceAnalytics.monthly.labels,
+      datasets: [
+        { label: "Present", data: attendanceAnalytics.monthly.present, backgroundColor: "#0fbbb5" },
+        { label: "Late", data: attendanceAnalytics.monthly.late, backgroundColor: "#f59e0b" },
+        { label: "Absent", data: attendanceAnalytics.monthly.absent, backgroundColor: "#d92d48" }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: chartPlugins,
+      scales: {
+        x: { stacked: true, ticks: { color: chartTextColor }, grid: { display: false } },
+        y: { stacked: true, beginAtZero: true, ticks: { precision: 0, color: chartTextColor }, grid: { color: gridColor } }
+      }
+    }
+  });
+
+  new Chart(document.getElementById("presentAbsentChart"), {
+    type: "doughnut",
+    data: {
+      labels: ["Present", "Absent"],
+      datasets: [{
+        data: [attendanceAnalytics.status.present, attendanceAnalytics.status.absent],
+        backgroundColor: ["#0fbbb5", "#d92d48"],
+        borderColor: "#ffffff",
+        borderWidth: 4
+      }]
+    },
+    options: { responsive: true, maintainAspectRatio: false, cutout: "62%", plugins: chartPlugins }
+  });
+
+  new Chart(document.getElementById("attendancePercentageChart"), {
+    type: "line",
+    data: {
+      labels: attendanceAnalytics.monthly.labels,
+      datasets: [{
+        label: "Attendance %",
+        data: attendanceAnalytics.monthly.percentages,
+        borderColor: "#2563eb",
+        backgroundColor: "rgba(37, 99, 235, 0.12)",
+        fill: true,
+        tension: 0.35
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: chartPlugins,
+      scales: {
+        y: { min: 0, max: 100, ticks: { callback: value => `${value}%`, color: chartTextColor }, grid: { color: gridColor } },
+        x: { ticks: { color: chartTextColor }, grid: { display: false } }
+      }
+    }
+  });
+</script>
+{% endblock %}

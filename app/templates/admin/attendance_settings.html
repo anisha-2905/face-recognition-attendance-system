@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+{% block title %}Attendance Settings | Face Attendance{% endblock %}
+{% block content %}
+<div class="page-heading">
+  <div>
+    <div class="page-kicker">Administration</div>
+    <h1 class="h3 mb-0">Attendance Settings</h1>
+  </div>
+</div>
+
+<div class="row g-3">
+  <div class="col-lg-7">
+    <div class="card">
+      <div class="card-body">
+        <div class="info-section-title"><i class="bi bi-clock-history"></i>Attendance Window</div>
+        <form method="post" class="manual-attendance-form row g-3">
+          <div class="col-md-6">
+            <label class="form-label" for="start_time">Attendance Start Time</label>
+            <input class="form-control" id="start_time" name="start_time" type="time" value="{{ settings.start_time.strftime('%H:%M') }}" required>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label" for="end_time">Attendance End Time</label>
+            <input class="form-control" id="end_time" name="end_time" type="time" value="{{ settings.end_time.strftime('%H:%M') }}" required>
+          </div>
+          <div class="col-12">
+            <div class="form-check form-switch">
+              <input class="form-check-input" id="auto_absent_enabled" name="auto_absent_enabled" type="checkbox" value="1" {% if settings.auto_absent_enabled %}checked{% endif %}>
+              <label class="form-check-label" for="auto_absent_enabled">Enable automatic absent marking</label>
+            </div>
+          </div>
+          <div class="col-12">
+            <button class="btn btn-primary" type="submit">Save Settings</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+  <div class="col-lg-5">
+    <div class="card h-100">
+      <div class="card-body">
+        <div class="info-section-title"><i class="bi bi-info-circle"></i>How It Works</div>
+        <p class="text-muted mb-2">Students can scan their face during the attendance window.</p>
+        <p class="text-muted mb-0">After the window closes, teachers can finalize a subject and date to automatically mark unscanned assigned students as absent.</p>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

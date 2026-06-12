@@ -1,0 +1,65 @@
+{% extends "base.html" %}
+{% block title %}Attendance Records | Face Attendance{% endblock %}
+{% block content %}
+<div class="page-heading">
+  <div>
+    <div class="page-kicker">Administration</div>
+    <h1 class="h3 mb-0">All Attendance Records</h1>
+  </div>
+</div>
+
+<form method="get" class="row g-2 align-items-end mb-3">
+  <div class="col-md-4">
+    <label class="form-label" for="subject_id">Subject</label>
+    <select class="form-select" id="subject_id" name="subject_id">
+      <option value="">All subjects</option>
+      {% for subject in subjects %}
+        <option value="{{ subject.id }}" {% if filters.subject_id == subject.id %}selected{% endif %}>{{ subject.code }} - {{ subject.name }}</option>
+      {% endfor %}
+    </select>
+  </div>
+  <div class="col-md-4">
+    <label class="form-label" for="student_id">Student</label>
+    <select class="form-select" id="student_id" name="student_id">
+      <option value="">All students</option>
+      {% for student in students %}
+        <option value="{{ student.id }}" {% if filters.student_id == student.id %}selected{% endif %}>{{ student.roll_number }} - {{ student.user.name }}</option>
+      {% endfor %}
+    </select>
+  </div>
+  <div class="col-md-2">
+    <label class="form-label" for="status">Status</label>
+    <select class="form-select" id="status" name="status">
+      <option value="">All</option>
+      {% for status in ["present", "late", "absent"] %}
+        <option value="{{ status }}" {% if filters.status == status %}selected{% endif %}>{{ status|title }}</option>
+      {% endfor %}
+    </select>
+  </div>
+  <div class="col-md-2">
+    <button class="btn btn-primary w-100" type="submit">Filter</button>
+  </div>
+</form>
+
+<div class="table-responsive">
+  <table class="table table-hover align-middle">
+    <thead><tr><th>Date</th><th>Student</th><th>Roll No.</th><th>Subject</th><th>Status</th><th>Source</th><th>Method</th><th>Marked At</th></tr></thead>
+    <tbody>
+      {% for row in records %}
+        <tr>
+          <td>{{ row.attendance_date }}</td>
+          <td>{{ row.student.user.name }}</td>
+          <td>{{ row.student.roll_number }}</td>
+          <td>{{ row.subject.code }}</td>
+          <td><span class="badge text-bg-secondary">{{ row.status }}</span></td>
+          <td>{{ row.attendance_source|replace("_", " ")|title }}</td>
+          <td>{{ row.method }}</td>
+          <td>{{ row.marked_at.strftime("%Y-%m-%d %H:%M") }}</td>
+        </tr>
+      {% else %}
+        <tr><td colspan="8" class="text-muted">No attendance records found.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

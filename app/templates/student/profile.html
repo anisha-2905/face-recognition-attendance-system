@@ -1,0 +1,137 @@
+{% extends "base.html" %}
+{% block title %}My Profile | Face Attendance{% endblock %}
+{% block content %}
+<div class="page-heading">
+  <div>
+    <div class="page-kicker">Account</div>
+    <h1 class="h3 mb-0">My Profile</h1>
+  </div>
+  <a class="btn btn-outline-primary" href="{{ url_for('student.dashboard') }}"><i class="bi bi-grid-1x2 me-1"></i>Dashboard</a>
+</div>
+
+{% if student %}
+  <div class="row g-3 align-items-stretch">
+    <div class="col-xl-4 col-lg-5">
+      <div class="card profile-hero">
+        <div class="card-body">
+          <div class="d-flex align-items-center gap-3">
+            {% if student.face_profile %}
+              <img class="profile-photo" src="{{ url_for('static', filename=student.face_profile.image_path) }}" alt="Registered face">
+            {% else %}
+              <div class="avatar profile-avatar">{{ student.user.name[:1]|upper }}</div>
+            {% endif %}
+            <div class="min-w-0">
+              <h2 class="h4 section-title mb-1">{{ student.user.name }}</h2>
+              <div class="text-muted">{{ student.user.email }}</div>
+            </div>
+          </div>
+
+          <div class="profile-meta">
+            <div class="profile-meta-item">
+              <span>Roll Number</span>
+              <strong>{{ student.roll_number }}</strong>
+            </div>
+            <div class="profile-meta-item">
+              <span>Admission Number</span>
+              <strong>{{ student.admission_number or "-" }}</strong>
+            </div>
+            <div class="profile-meta-item">
+              <span>Face Registration</span>
+              {% if student.face_profile %}
+                <strong class="text-success"><i class="bi bi-check-circle me-1"></i>Registered</strong>
+              {% else %}
+                <strong class="text-warning"><i class="bi bi-exclamation-circle me-1"></i>Not registered</strong>
+              {% endif %}
+            </div>
+          </div>
+
+          {% if student.face_profile %}
+            <div class="mt-3 text-muted small">Last updated {{ student.face_profile.updated_at.strftime("%Y-%m-%d %H:%M") }}</div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+    <div class="col-xl-8 col-lg-7">
+      <div class="dashboard-stack">
+        <div class="card">
+          <div class="card-body">
+            <div class="info-section-title"><i class="bi bi-mortarboard"></i>Academic Details</div>
+            <div class="data-card-grid">
+              <div class="data-card">
+                <div class="data-card-label">Department</div>
+                <div class="data-card-value">{{ student.department or "-" }}</div>
+              </div>
+              <div class="data-card">
+                <div class="data-card-label">Semester</div>
+                <div class="data-card-value">{{ student.semester or "-" }}</div>
+              </div>
+              <div class="data-card">
+                <div class="data-card-label">Section</div>
+                <div class="data-card-value">{{ student.section or "-" }}</div>
+              </div>
+              <div class="data-card">
+                <div class="data-card-label">Phone</div>
+                <div class="data-card-value">{{ student.phone or "-" }}</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="row g-3">
+          <div class="col-md-6">
+            <div class="card stat-card h-100">
+              <div class="card-body">
+                <div class="d-flex justify-content-between">
+                  <div>
+                    <div class="stat-label">Profile Status</div>
+                    <div class="stat-value">{% if student.face_profile %}Ready{% else %}Setup{% endif %}</div>
+                  </div>
+                  <span class="stat-icon"><i class="bi bi-person-bounding-box"></i></span>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="card stat-card h-100">
+              <div class="card-body">
+                <div class="d-flex justify-content-between">
+                  <div>
+                    <div class="stat-label">Attendance Access</div>
+                    <div class="stat-value">Active</div>
+                  </div>
+                  <span class="stat-icon"><i class="bi bi-calendar2-check"></i></span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-body">
+            <div class="panel-header">
+              <div>
+                <div class="info-section-title mb-1"><i class="bi bi-shield-check"></i>Attendance Summary</div>
+                <div class="text-muted small">Use reports for detailed percentages and subject-wise trends.</div>
+              </div>
+              <a class="btn btn-sm btn-outline-primary" href="{{ url_for('student.reports') }}">Open Reports</a>
+            </div>
+            <div class="data-card-grid">
+              <div class="data-card">
+                <div class="data-card-label">History</div>
+                <div class="data-card-value">Attendance records</div>
+              </div>
+              <div class="data-card">
+                <div class="data-card-label">Face Status</div>
+                <div class="data-card-value">{{ "Enabled" if student.face_profile else "Pending setup" }}</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+{% else %}
+  <div class="alert alert-warning">Student profile is not available.</div>
+{% endif %}
+{% endblock %}

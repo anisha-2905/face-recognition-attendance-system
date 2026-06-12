@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% block title %}Students | Face Attendance{% endblock %}
+{% block content %}
+<div class="page-heading">
+  <div>
+    <div class="page-kicker">Administration</div>
+    <h1 class="h3 mb-0">Students</h1>
+  </div>
+  <a class="btn btn-primary" href="{{ url_for('admin.create_student') }}"><i class="bi bi-plus-lg me-1"></i>New Student</a>
+</div>
+<div class="table-responsive">
+  <table class="table table-hover align-middle">
+    <thead><tr><th>Name</th><th>Email</th><th>Roll No.</th><th>Department</th><th>Semester</th><th></th></tr></thead>
+    <tbody>
+      {% for student in students %}
+        <tr>
+          <td>{{ student.user.name }}</td>
+          <td>{{ student.user.email }}</td>
+          <td>{{ student.roll_number }}</td>
+          <td>{{ student.department or "-" }}</td>
+          <td>{{ student.semester or "-" }}</td>
+          <td class="text-end">
+            <a class="btn btn-sm btn-outline-primary" href="{{ url_for('admin.edit_student', student_id=student.id) }}">Edit</a>
+            <form class="d-inline" method="post" action="{{ url_for('admin.delete_student', student_id=student.id) }}">
+              <button class="btn btn-sm btn-outline-danger" type="submit">Delete</button>
+            </form>
+          </td>
+        </tr>
+      {% else %}
+        <tr><td colspan="6" class="text-muted">No students found.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

@@ -1,0 +1,133 @@
+{% extends "base.html" %}
+{% block title %}Subject Allocation | Face Attendance{% endblock %}
+{% block content %}
+<div class="page-heading">
+  <div>
+    <div class="page-kicker">Administration</div>
+    <h1 class="h3 mb-0">Subject Allocation</h1>
+  </div>
+</div>
+
+<form method="get" class="row g-2 align-items-end mb-3">
+  <div class="col-lg-3 col-md-6">
+    <label class="form-label" for="department_id">Department</label>
+    <select class="form-select" id="department_id" name="department_id">
+      <option value="">All departments</option>
+      {% for department in departments %}
+        <option value="{{ department.id }}" {% if filters.department_id == department.id %}selected{% endif %}>{{ department.name }}</option>
+      {% endfor %}
+    </select>
+  </div>
+  <div class="col-lg-2 col-md-6">
+    <label class="form-label" for="section">Class / Section</label>
+    <input class="form-control" id="section" name="section" value="{{ filters.section or '' }}" placeholder="A, B, C">
+  </div>
+  <div class="col-lg-2 col-md-6">
+    <label class="form-label" for="semester">Semester / Year</label>
+    <input class="form-control" id="semester" name="semester" value="{{ filters.semester or '' }}" placeholder="Sem 1">
+  </div>
+  <div class="col-lg-3 col-md-6">
+    <label class="form-label" for="student_id">Student</label>
+    <select class="form-select" id="student_id" name="student_id">
+      <option value="">Select student</option>
+      {% for student in students %}
+        <option value="{{ student.id }}" {% if selected_student and selected_student.id == student.id %}selected{% endif %}>{{ student.roll_number }} - {{ student.user.name }}</option>
+      {% endfor %}
+    </select>
+  </div>
+  <div class="col-lg-2 col-md-6">
+    <button class="btn btn-primary w-100" type="submit">Apply</button>
+  </div>
+</form>
+
+<div class="row g-3 align-items-stretch">
+  <div class="col-lg-5">
+    <div class="card h-100">
+      <div class="card-body">
+        <div class="info-section-title"><i class="bi bi-person-lines-fill"></i>Selected Student</div>
+        {% if selected_student %}
+          <div class="profile-meta-item mb-2">
+            <span>Name</span>
+            <strong>{{ selected_student.user.name }}</strong>
+          </div>
+          <div class="profile-meta-item mb-2">
+            <span>Roll Number</span>
+            <strong>{{ selected_student.roll_number }}</strong>
+          </div>
+          <div class="profile-meta-item mb-2">
+            <span>Department</span>
+            <strong>{{ selected_student.department or "-" }}</strong>
+          </div>
+          <div class="profile-meta-item">
+            <span>Class</span>
+            <strong>{{ selected_student.semester or "-" }} / {{ selected_student.section or "-" }}</strong>
+          </div>
+        {% else %}
+          <div class="text-muted">Select a student to assign subjects.</div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  <div class="col-lg-7">
+    <div class="card h-100">
+      <div class="card-body">
+        <div class="info-section-title"><i class="bi bi-journal-plus"></i>Assign Subjects</div>
+        {% if selected_student %}
+          <form method="post" class="manual-attendance-form row g-2">
+            <input type="hidden" name="student_id" value="{{ selected_student.id }}">
+            <div class="col-12">
+              <label class="form-label" for="subject_ids">Subjects</label>
+              <select class="form-select" id="subject_ids" name="subject_ids" multiple size="8">
+                {% for subject in subjects %}
+                  <option value="{{ subject.id }}" {% if subject.id in assigned_subject_ids %}disabled{% endif %}>
+                    {{ subject.code }} - {{ subject.name }}{% if subject.id in assigned_subject_ids %} (Already assigned){% endif %}
+                  </option>
+                {% endfor %}
+              </select>
+              <div class="form-text">Hold Ctrl to select multiple subjects.</div>
+            </div>
+            <div class="col-12">
+              <button class="btn btn-primary" type="submit">Assign Selected Subjects</button>
+            </div>
+          </form>
+        {% else %}
+          <div class="text-muted">No student selected.</div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="card mt-3">
+  <div class="card-body">
+    <div class="info-section-title"><i class="bi bi-diagram-3"></i>Assigned Subjects</div>
+    <div class="table-responsive shadow-none">
+      <table class="table table-hover align-middle">
+        <thead><tr><th>Subject</th><th>Department</th><th>Semester</th><th>Assigned At</th><th></th></tr></thead>
+        <tbody>
+          {% if selected_student %}
+            {% for enrollment in selected_student.enrollments %}
+              <tr>
+                <td><span class="fw-semibold">{{ enrollment.subject.code }}</span><div class="text-muted small">{{ enrollment.subject.name }}</div></td>
+                <td>{{ enrollment.subject.department or "-" }}</td>
+                <td>{{ enrollment.subject.semester or "-" }}</td>
+                <td>{{ enrollment.enrolled_at.strftime("%Y-%m-%d %H:%M") }}</td>
+                <td class="text-end">
+                  <form method="post" action="{{ url_for('admin.remove_subject_allocation', enrollment_id=enrollment.id) }}" class="d-inline">
+                    <button class="btn btn-sm btn-outline-danger" type="submit">Remove</button>
+                  </form>
+                </td>
+              </tr>
+            {% else %}
+              <tr><td colspan="5" class="text-muted">No subjects assigned to this student.</td></tr>
+            {% endfor %}
+          {% else %}
+            <tr><td colspan="5" class="text-muted">Select a student to view assigned subjects.</td></tr>
+          {% endif %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}
