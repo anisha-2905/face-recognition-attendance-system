@@ -1,15 +1,73 @@
 {% extends "base.html" %}
 {% block title %}Welcome | Face Attendance{% endblock %}
 {% block content %}
-<section class="public-hero">
-  <div class="hero-content mx-auto text-center">
-    <div class="page-kicker">Smart Attendance Platform</div>
-    <h1 class="hero-title mx-auto">Face Recognition Attendance System</h1>
-    <p class="lead hero-copy mx-auto">A modern role-based workspace for managing face registration, attendance records, reports, and institutional users.</p>
-    <div class="d-flex flex-wrap justify-content-center gap-2">
-      <a class="btn btn-primary btn-lg" href="{{ url_for('auth.student_login') }}"><i class="bi bi-mortarboard me-1"></i>Student Login</a>
-      <a class="btn btn-outline-primary btn-lg" href="{{ url_for('auth.teacher_login') }}"><i class="bi bi-person-workspace me-1"></i>Teacher Login</a>
+<div class="landing-page">
+  <section class="public-hero landing-hero">
+    <div class="landing-copy">
+      <a class="landing-brand" href="{{ url_for('main.index') }}" aria-label="Face Attendance home">
+        <span class="landing-brand-icon"><i class="bi bi-person-bounding-box"></i></span>
+        <span>
+          <span class="landing-brand-title">Face Attendance</span>
+          <span class="landing-brand-subtitle">Academic attendance platform</span>
+        </span>
+      </a>
+
+      <div class="page-kicker">Modern Attendance Management</div>
+      <h1 class="hero-title">Face Recognition Attendance System</h1>
+      <p class="lead hero-copy">A secure role-based platform for student attendance, face recognition, auto absent tracking, reports, and analytics.</p>
+
+      <div class="landing-actions" aria-label="Role login options">
+        <a class="btn btn-primary btn-lg" href="{{ url_for('admin.login') }}"><i class="bi bi-shield-lock me-1"></i>Admin</a>
+        <a class="btn btn-outline-primary btn-lg" href="{{ url_for('auth.teacher_login') }}"><i class="bi bi-person-workspace me-1"></i>Teacher</a>
+        <a class="btn btn-outline-primary btn-lg" href="{{ url_for('auth.student_login') }}"><i class="bi bi-mortarboard me-1"></i>Student</a>
+      </div>
     </div>
-  </div>
-</section>
+
+    <div class="hero-dashboard" aria-label="Attendance analytics illustration">
+      <div class="mockup-topbar">
+        <span></span>
+        <span></span>
+        <span></span>
+      </div>
+      <div class="mockup-header">
+        <div>
+          <strong>Attendance Overview</strong>
+          <small>Today’s academic activity</small>
+        </div>
+        <span class="mockup-badge">Live</span>
+      </div>
+      <div class="mockup-stat-row">
+        <div>
+          <strong>84%</strong>
+          <span>Average Attendance</span>
+        </div>
+        <div>
+          <strong>126</strong>
+          <span>Present Today</span>
+        </div>
+      </div>
+      <div class="mockup-chart" aria-hidden="true">
+        <span style="height: 46%"></span>
+        <span style="height: 72%"></span>
+        <span style="height: 58%"></span>
+        <span style="height: 86%"></span>
+        <span style="height: 64%"></span>
+        <span style="height: 78%"></span>
+      </div>
+      <div class="mockup-list">
+        <div><span><i class="bi bi-check2-circle"></i> Face scan verified</span><strong>Present</strong></div>
+        <div><span><i class="bi bi-calendar-x"></i> Auto absent enabled</span><strong>System</strong></div>
+        <div><span><i class="bi bi-file-earmark-arrow-down"></i> Report exports</span><strong>Ready</strong></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="landing-section why-section">
+    <div>
+      <div class="page-kicker">Why Choose Us</div>
+      <h2>Built for reliable college attendance workflows</h2>
+    </div>
+    <p>Face Attendance keeps the process simple for students, useful for teachers, and controlled for administrators. It reduces manual effort, improves record accuracy, and gives departments clear attendance visibility without changing the core academic workflow.</p>
+  </section>
+</div>
 {% endblock %}
