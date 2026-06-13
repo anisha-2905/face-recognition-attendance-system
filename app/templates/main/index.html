@@ -2,26 +2,13 @@
 {% block title %}Welcome | Face Attendance{% endblock %}
 {% block content %}
 <section class="public-hero">
-  <div class="row align-items-center g-4 w-100">
-    <div class="col-lg-7">
-      <div class="page-kicker">Smart Attendance Platform</div>
-      <h1 class="hero-title">Face Recognition Attendance System</h1>
-      <p class="lead hero-copy">A modern role-based workspace for managing face registration, attendance records, reports, and institutional users.</p>
-      <div class="d-flex flex-wrap gap-2">
-        <a class="btn btn-primary btn-lg" href="{{ url_for('auth.student_login') }}"><i class="bi bi-mortarboard me-1"></i>Student Login</a>
-        <a class="btn btn-outline-primary btn-lg" href="{{ url_for('auth.teacher_login') }}"><i class="bi bi-person-workspace me-1"></i>Teacher Login</a>
-      </div>
-      <div class="mt-3 small text-muted">Administrators use the secure admin portal at <a class="fw-semibold text-primary" href="{{ url_for('admin.login') }}">/admin/login</a>.</div>
-    </div>
-    <div class="col-lg-5">
-      <div class="card hero-panel">
-        <h2 class="h5 section-title mb-3">Role Workspaces</h2>
-        <div class="d-grid gap-3">
-          <div class="role-pill"><i class="bi bi-shield-check"></i><span>Admin manages users, departments, subjects, and staff.</span></div>
-          <div class="role-pill"><i class="bi bi-camera-video"></i><span>Teacher runs face sessions and reviews attendance reports.</span></div>
-          <div class="role-pill"><i class="bi bi-graph-up-arrow"></i><span>Student tracks registration status, history, and analytics.</span></div>
-        </div>
-      </div>
+  <div class="hero-content mx-auto text-center">
+    <div class="page-kicker">Smart Attendance Platform</div>
+    <h1 class="hero-title mx-auto">Face Recognition Attendance System</h1>
+    <p class="lead hero-copy mx-auto">A modern role-based workspace for managing face registration, attendance records, reports, and institutional users.</p>
+    <div class="d-flex flex-wrap justify-content-center gap-2">
+      <a class="btn btn-primary btn-lg" href="{{ url_for('auth.student_login') }}"><i class="bi bi-mortarboard me-1"></i>Student Login</a>
+      <a class="btn btn-outline-primary btn-lg" href="{{ url_for('auth.teacher_login') }}"><i class="bi bi-person-workspace me-1"></i>Teacher Login</a>
     </div>
   </div>
 </section>
